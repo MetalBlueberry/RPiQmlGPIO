@@ -43,11 +43,13 @@ COPIES += cpqmldir
 
 SOURCES += \
         rpiqmlgpio.cpp \
-    dht.cpp
+    dht.cpp \
+    gpiopin.cpp
 
 HEADERS += \
         rpiqmlgpio.h \
-    dht.h
+    dht.h \
+    gpiopin.h
 
 unix {
     target.path = $$[QT_INSTALL_QML]/RPiQmlGPIO/
