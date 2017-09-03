@@ -4,7 +4,7 @@
 #include <QQuickItem>
 #include <QTimer>
 #include <wiringPi.h>
-
+#include <QDateTime>
 
 class DHT : public QQuickItem
 {
@@ -15,6 +15,7 @@ class DHT : public QQuickItem
     Q_PROPERTY(int samplePeriod READ samplePeriod WRITE setSamplePeriod NOTIFY samplePeriodChanged)
     Q_PROPERTY(int failReadRetryPeriod READ failReadRetryPeriod WRITE setFailReadRetryPeriod NOTIFY failReadRetryPeriodChanged)
     Q_PROPERTY(int pin READ pin WRITE setPin NOTIFY pinChanged)
+    Q_PROPERTY(QDateTime lastValidData READ lastValidData NOTIFY readingComplete)
 
 public:
     DHT(QQuickItem *parent = 0);
@@ -35,12 +36,16 @@ public:
     int pin();
     void setPin(int value);
 
+    QDateTime lastValidData();
+
+
 signals:
     void tempChanged();
     void humidityChanged();
     void samplePeriodChanged();
     void pinChanged();
     void failReadRetryPeriodChanged();
+    void readingComplete();
 
 public slots:
 
@@ -53,6 +58,8 @@ private:
     int _samplePeriod = 1000;
     int _failReadRetryPeriod = 100;
     int _pin = -1;
+
+    QDateTime _lastValidData;
 
     int data[5] = { 0, 0, 0, 0, 0 };
 

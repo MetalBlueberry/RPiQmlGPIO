@@ -6,7 +6,7 @@ DHT::DHT(QQuickItem *parent): QQuickItem(parent)
     sampleTimer->setInterval(this->samplePeriod());
     sampleTimer->start();
     connect(sampleTimer,SIGNAL(timeout()),this,SLOT(readDhtData()));
-    readDhtData();
+
 }
 
 qreal DHT::farenheit()
@@ -55,7 +55,7 @@ void DHT::setSamplePeriod(int value)
 
 int DHT::failReadRetryPeriod()
 {
-   return this->_failReadRetryPeriod;
+    return this->_failReadRetryPeriod;
 }
 
 void DHT::setFailReadRetryPeriod(int value)
@@ -76,7 +76,13 @@ void DHT::setPin(int value)
     if (this->_pin != value){
         this->_pin = value;
         emit pinChanged();
+        readDhtData();
     }
+}
+
+QDateTime DHT::lastValidData()
+{
+    return this->_lastValidData;
 }
 
 void DHT::readDhtData()
@@ -150,13 +156,17 @@ void DHT::readDhtData()
             c = -c;
         }
         float f = c * 1.8f + 32;
-//        qDebug("Humidity = %.1f %% Temperature = %.1f *C (%.1f *F)\n", h, c, f );
+        //        qDebug("Humidity = %.1f %% Temperature = %.1f *C (%.1f *F)\n", h, c, f );
+
         this->setTemp(c);
         this->setHumidity(h);
         this->sampleTimer->setInterval(this->samplePeriod());
 
+        this->_lastValidData = QDateTime::currentDateTime();
+        emit readingComplete();
+
     }else  {
-//        qDebug("Data not good, skip\n" );
+        //        qDebug("Data not good, skip\n" );
         this->sampleTimer->setInterval(this->failReadRetryPeriod());
     }
 

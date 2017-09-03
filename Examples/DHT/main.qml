@@ -1,7 +1,8 @@
 import QtQuick 2.7
-import QtQuick.Controls 2.0
+import QtQuick.Controls 2.1
 import QtQuick.Layouts 1.3
-import RPiQmlGPIO 1.0
+import QtCharts 2.2
+
 
 ApplicationWindow {
     visible: true
@@ -13,50 +14,103 @@ ApplicationWindow {
         id: swipeView
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
-
         Page{
-            Column{
-                anchors.centerIn: parent
-                width: 100
-                Label{
-                    text: "Temp Cº : " + dht.celsius.toFixed(2)
-//                    anchors.centerIn: parent
+            background: Rectangle{
+                color:"black"
+            }
+            ColumnLayout{
+                anchors.fill: parent
+                Slider{
+                    id: rangeSelector
+                    from: 7*24*60
+                    to: 1
+                    value: 1
+                    Layout.fillWidth: true
+                    stepSize: 1
                 }
-                Label{
-                    text: "Temp: Fº " + dht.farenheit.toFixed(2)
-//                    anchors.centerIn: parent
-                }
-                Label{
-                    text: "Humidity: % " + dht.humidity.toFixed(2)
-//                    anchors.centerIn: parent
+                ChartView {
+                    title: "Temperature Cº"
+                    antialiasing: true
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    titleColor: "white"
+                    legend.labelColor: "white"
+                    DateTimeAxis{
+                        id: xaxis
+                        function updateAxis(){
+                            var last1 = series1.at(series1.count-1).x
+                            var last2 = series2.at(series2.count-1).x
+                            var last = Math.min(last1, last2)
+                            var now = new Date()
+                            now.setTime(last)
+                            max = now
+                            now.setTime(last - rangeSelector.value*60*1000)
+                            min = now;
+                            if( rangeSelector.value > 24*60){
+                                format = "yy/MM/dd hh:mm"
+                            }else if (rangeSelector.value > 5) {
+                                format = "hh:mm"
+                            }else{
+                                format = "hh:mm:ss"
+                            }
+                        }
+                        labelsColor: "white"
+                    }
+                    backgroundColor: "transparent"
+                    ValueAxis{
+                        id: yaxis
+                        min:0
+                        max:40
+                        labelsColor: "white"
+                    }
+                    LineSeries {
+                        id: series1
+                        name: "DHT 11"
+
+                        axisX: xaxis
+                        axisY: yaxis
+                        onPointAdded:xaxis.updateAxis()
+                    }
+                    LineSeries {
+                        id: series2
+                        name: "DHT 22"
+                        color: "red"
+                        axisX: xaxis
+                        axisY: yaxis
+                        onPointAdded:xaxis.updateAxis()
+                    }
                 }
             }
+        }
+        GaugePage{
+            dhtpin: 27
+            onReadingComplete: {
+                series1.append(  new Date() ,celsius)
+            }
+
 
         }
-//        Page1 {
-//        }
-
-//        Page {
-//            Label {
-//                text: qsTr("Second page")
-//                anchors.centerIn: parent
-//            }
-//        }
-    }
-    DHT{
-        id: dht
-        pin: 27
+        GaugePage{
+            dhtpin: 23
+            onReadingComplete: {
+                series2.append(  new Date() ,celsius)
+            }
+        }
 
     }
+
 
     footer: TabBar {
         id: tabBar
         currentIndex: swipeView.currentIndex
         TabButton {
-            text: qsTr("First")
+            text: qsTr("Graph")
         }
         TabButton {
-            text: qsTr("Second")
+            text: qsTr("DHT11")
+        }
+        TabButton {
+            text: qsTr("DHT22")
         }
     }
 }
